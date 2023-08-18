@@ -14,8 +14,8 @@ function operation() {
         message: 'Choose an option',
         choices: [
           'Create an Account',
-          'Check Balance',
           'Deposit',
+          'Check Balance',
           'Withdraw',
           'Leave',
         ],
@@ -28,6 +28,8 @@ function operation() {
 
       if (action === 'Create an Account') {
         createAccount();
+      } else if (action === 'Deposit') {
+        deposit();
       } else if (action === 'Leave') {
         console.log(chalk.bgCyan.black('Teste'));
         process.exit();
@@ -69,7 +71,7 @@ function buildAccount() {
             'User already exists. Please choose another username'
           )
         );
-        buildAccount();
+        buildAccount(); //here we return to the beginning of the function
         return;
       }
 
@@ -85,4 +87,44 @@ function buildAccount() {
       operation();
     })
     .catch((err) => console.log(err));
+}
+
+function deposit() {
+  inquirer
+    .prompt([
+      {
+        name: 'accountName',
+        message: 'What is your username?',
+      },
+    ])
+    .then((answer) => {
+      const accountName = answer['accountName'];
+
+      if (!checkAccount(accountName)) {
+        return deposit();
+      }
+    });
+
+  // if (fs.existsSync(`accounts/${accountName}.json`)) {
+  //   inquirer
+  //     .prompt([
+  //       {
+  //         name: 'depositValue',
+  //         message: 'Please choose how much money you want to deposit.',
+  //       },
+  //     ])
+  //     .then((answer) => {
+  //       const depositValue = answer['depositValue'];
+  //       console.log(depositValue);
+  //     });
+  // }
+}
+
+function checkAccount(accountName) {
+  if (!fs.existsSync(`accounts/${accountName}.json`)) {
+    console.log(chalk.bgRed.black('This account does not exist.'))
+    return false;
+  }
+
+  return true;
 }
