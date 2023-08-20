@@ -34,9 +34,11 @@ function operation() {
         deposit();
       } else if (action === 'Check Balance') {
         checkBalance();
+      } else if (action === 'Withdraw') {
+        withdrawMoney();
       } else if (action === 'Leave') {
         console.log(
-          chalk.bgCyan.black('Thank you for using Gold Bank. Have a nice day.')
+          chalk.bgCyan.black.bold('Thank you for using Gold Bank. Have a nice day.')
         );
         process.exit();
       }
@@ -49,9 +51,9 @@ function operation() {
 function createAccount() {
   //this one serves some welcoming messages to the user
   console.log(
-    chalk.bgCyanBright.black('Congratulations. Thanks for choosing Gold Bank!')
+    chalk.bgCyanBright.black.bold('Congratulations. Thanks for choosing Gold Bank!')
   );
-  console.log(chalk.green('Fill the following fields with your personal data'));
+  console.log(chalk.green.bold('Fill the following fields with your personal data'));
 
   buildAccount();
 }
@@ -75,7 +77,7 @@ function buildAccount() {
 
       if (fs.existsSync(`accounts/${accountName}.json`)) {
         console.log(
-          chalk.bgRed.black(
+          chalk.bgRed.black.bold(
             'User already exists. Please choose another username'
           )
         );
@@ -91,7 +93,7 @@ function buildAccount() {
         }
       );
 
-      console.log(chalk.green('Account sucessfully created.'));
+      console.log(chalk.green.bold('Account sucessfully created.'));
       operation();
     })
     .catch((err) => console.log(err));
@@ -120,7 +122,7 @@ function deposit() {
             {
               name: 'depositAmount',
               message:
-                'Type the amount of money that you want to deposit in your account',
+                'Type the amount of money that you want to deposit in your bank account',
             },
           ])
           .then((answer) => {
@@ -129,14 +131,49 @@ function deposit() {
             addAmount(accountName, depositAmount);
 
             operation();
-          });
+          })
+          .catch((err) => console.log(err));
+      }
+    });
+}
+
+function withdrawMoney() {
+  inquirer
+    .prompt([
+      {
+        name: 'accountName',
+        message: 'What is your username?',
+      },
+    ])
+    .then((answer) => {
+      const accountName = answer['accountName'];
+
+      if (!checkAccount(accountName)) {
+        return withdrawMoney();
+      }
+
+      if (checkAccount(accountName)) {
+        inquirer
+          .prompt([
+            {
+              name: 'withdrawAmount',
+              message:
+                'Type the amount of money that you want to withdraw from your bank account',
+            },
+          ])
+          .then((answer) => {
+            const withdrawAmount = answer['withdrawAmount'];
+
+            subtractAmount(accountName, withdrawAmount);
+          })
+          .catch((err) => console.log(err));
       }
     });
 }
 
 function checkAccount(accountName) {
   if (!fs.existsSync(`accounts/${accountName}.json`)) {
-    console.log(chalk.bgRed.black('This account does not exist.'));
+    console.log(chalk.bgRed.black.bold('This account does not exist.'));
     return false;
   }
 
@@ -161,6 +198,36 @@ function addAmount(accountName, amount) {
     `Deposit of ${amount} made successfully. Your current balance is: ` +
       accountData.balance
   );
+}
+
+function subtractAmount(accountName, amount) {
+  const accountData = getAccount(accountName);
+
+  if (amount > accountData.balance) {
+    console.log(
+      chalk.bgRed.black.bold(
+        "ERROR: You may not have enough balance to perform that operation."
+      )
+    );
+    operation();
+    // withdrawMoney();
+  } else if (amount <= accountData.balance) {
+    accountData.balance = parseFloat(accountData.balance) - parseFloat(amount);
+
+    fs.writeFileSync(
+      `accounts/${accountName}.json`,
+      JSON.stringify(accountData),
+      function (err) {
+        console.log(err);
+      }
+    );
+  
+    console.log(
+      chalk.bgCyan.black.bold(`You just made a withdraw of ${amount} U$D`)
+    );
+
+    operation();
+  }
 }
 
 function getAccount(accountName) {
@@ -191,7 +258,11 @@ function checkBalance() {
       const accountFile = getAccount(accountName);
       const accountBalance = accountFile.balance;
 
-      console.log(chalk.bgCyanBright.black('Your current balance is: ' + chalk.bgGreen(accountBalance + ' U$D')))
-      // console.log('Your current balance is: ' + accountBalance + ' U$D');
+      console.log(
+        chalk.bgCyan.black.bold(
+          'Your current balance is: ' + chalk.bgGreen.bold(accountBalance + ' U$D')
+        )
+      );
+      operation();
     });
 }
